@@ -24,10 +24,11 @@
 #   - SSL=false is correct: Coolify's Traefik terminates TLS; containers speak
 #     HTTP internally. The frontend entrypoint strips `ssl` directives from
 #     nginx.conf when SSL=false.
-#   - SERVICE_FQDN_* is the bare domain in Coolify (no protocol), so REACT_APP_*
-#     URIs prepend https:// explicitly. You must set these manually in Coolify's
-#     Environment Variables tab (auto-generation is unreliable when a compose
-#     file is switched mid-resource).
+#   - SERVICE_FQDN_BACKEND_8082 and SERVICE_FQDN_FRONTEND_3000 are hardcoded to
+#     the public domains. Coolify recognizes the magic names and generates
+#     Traefik routing for those hostnames -> the matching container ports.
+#     If you change domains, update both the SERVICE_FQDN_* declarations AND
+#     the REACT_APP_* / OAUTH_REDIRECT_URL values that reference them.
 #   - Image tags pinned to docker-v0.5.2 (matches Highlight's reference .env).
 #     Bump together when you upgrade; do not use :latest.
 #   - Postgres uses ankane/pgvector — Highlight's embeddings code requires the
@@ -153,7 +154,7 @@ services:
     volumes:
       - highlight-data:/highlight-data
     environment:
-      - SERVICE_FQDN_BACKEND_8082
+      - SERVICE_FQDN_BACKEND_8082=highlight-api.workremits.co.uk
       - SSL=false
       - ON_PREM=true
       - ENVIRONMENT=dev
@@ -161,8 +162,8 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - REACT_APP_AUTH_MODE=password
-      - REACT_APP_FRONTEND_URI=https://${SERVICE_FQDN_FRONTEND_3000}
-      - OAUTH_REDIRECT_URL=https://${SERVICE_FQDN_BACKEND_8082}/private/oauth/callback
+      - REACT_APP_FRONTEND_URI=https://highlight.workremits.co.uk
+      - OAUTH_REDIRECT_URL=https://highlight-api.workremits.co.uk/private/oauth/callback
       - ENABLE_OBJECT_STORAGE=false
       - OBJECT_STORAGE_FS=/highlight-data
       - SESSION_FILE_PATH_PREFIX=/tmp/
@@ -186,12 +187,12 @@ services:
     depends_on:
       - backend
     environment:
-      - SERVICE_FQDN_FRONTEND_3000
+      - SERVICE_FQDN_FRONTEND_3000=highlight.workremits.co.uk
       - SSL=false
       - REACT_APP_AUTH_MODE=password
-      - REACT_APP_PRIVATE_GRAPH_URI=https://${SERVICE_FQDN_BACKEND_8082}/private
-      - REACT_APP_PUBLIC_GRAPH_URI=https://${SERVICE_FQDN_BACKEND_8082}/public
-      - REACT_APP_FRONTEND_URI=https://${SERVICE_FQDN_FRONTEND_3000}
+      - REACT_APP_PRIVATE_GRAPH_URI=https://highlight-api.workremits.co.uk/private
+      - REACT_APP_PUBLIC_GRAPH_URI=https://highlight-api.workremits.co.uk/public
+      - REACT_APP_FRONTEND_URI=https://highlight.workremits.co.uk
       - REACT_APP_DISABLE_ANALYTICS=true
     logging: *default-logging
 
