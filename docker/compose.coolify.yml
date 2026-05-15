@@ -154,7 +154,6 @@ services:
     volumes:
       - highlight-data:/highlight-data
     environment:
-      - SERVICE_FQDN_BACKEND_8082=highlight-api.workremits.co.uk
       - SSL=false
       - ON_PREM=true
       - ENVIRONMENT=dev
@@ -179,6 +178,17 @@ services:
       - REDIS_EVENTS_STAGING_ENDPOINT=redis:6379
       - KAFKA_SERVERS=kafka:9092
       - KAFKA_TOPIC=dev
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.highlight-backend-http.entrypoints=http
+      - traefik.http.routers.highlight-backend-http.rule=Host(`highlight-api.workremits.co.uk`)
+      - traefik.http.routers.highlight-backend-http.middlewares=redirect-to-https
+      - traefik.http.routers.highlight-backend-https.entrypoints=https
+      - traefik.http.routers.highlight-backend-https.rule=Host(`highlight-api.workremits.co.uk`)
+      - traefik.http.routers.highlight-backend-https.tls=true
+      - traefik.http.routers.highlight-backend-https.tls.certresolver=letsencrypt
+      - traefik.http.services.highlight-backend.loadbalancer.server.port=8082
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
     logging: *default-logging
 
   frontend:
@@ -187,13 +197,22 @@ services:
     depends_on:
       - backend
     environment:
-      - SERVICE_FQDN_FRONTEND_3000=highlight.workremits.co.uk
       - SSL=false
       - REACT_APP_AUTH_MODE=password
       - REACT_APP_PRIVATE_GRAPH_URI=https://highlight-api.workremits.co.uk/private
       - REACT_APP_PUBLIC_GRAPH_URI=https://highlight-api.workremits.co.uk/public
       - REACT_APP_FRONTEND_URI=https://highlight.workremits.co.uk
       - REACT_APP_DISABLE_ANALYTICS=true
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.highlight-frontend-http.entrypoints=http
+      - traefik.http.routers.highlight-frontend-http.rule=Host(`highlight.workremits.co.uk`)
+      - traefik.http.routers.highlight-frontend-http.middlewares=redirect-to-https
+      - traefik.http.routers.highlight-frontend-https.entrypoints=https
+      - traefik.http.routers.highlight-frontend-https.rule=Host(`highlight.workremits.co.uk`)
+      - traefik.http.routers.highlight-frontend-https.tls=true
+      - traefik.http.routers.highlight-frontend-https.tls.certresolver=letsencrypt
+      - traefik.http.services.highlight-frontend.loadbalancer.server.port=3000
     logging: *default-logging
 
 volumes:
