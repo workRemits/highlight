@@ -215,6 +215,28 @@ services:
       - traefik.http.services.highlight-frontend.loadbalancer.server.port=3000
     logging: *default-logging
 
+  collector:
+    build:
+      dockerfile: ./docker/collector.Dockerfile
+      context: ..
+      args:
+        - IN_DOCKER_GO=true
+        - SSL=false
+    restart: on-failure
+    depends_on:
+      - backend
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.highlight-otel-http.entrypoints=http
+      - traefik.http.routers.highlight-otel-http.rule=Host(`otel.workremits.co.uk`)
+      - traefik.http.routers.highlight-otel-http.middlewares=redirect-to-https
+      - traefik.http.routers.highlight-otel-https.entrypoints=https
+      - traefik.http.routers.highlight-otel-https.rule=Host(`otel.workremits.co.uk`)
+      - traefik.http.routers.highlight-otel-https.tls=true
+      - traefik.http.routers.highlight-otel-https.tls.certresolver=letsencrypt
+      - traefik.http.services.highlight-otel.loadbalancer.server.port=4318
+    logging: *default-logging
+
 volumes:
   postgres-data:
   redis-data:
