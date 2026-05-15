@@ -126,10 +126,11 @@ services:
       - clickhouse-data:/var/lib/clickhouse
       - clickhouse-logs:/var/log/clickhouse-server
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
-      interval: 5s
+      test: ["CMD", "clickhouse-client", "--host", "localhost", "--query", "SELECT 1"]
+      interval: 10s
       timeout: 5s
       retries: 20
+      start_period: 30s
     logging: *default-logging
 
   # ───── Highlight services ─────────────────────────────────────────
