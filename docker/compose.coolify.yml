@@ -16,14 +16,18 @@
 #      Log in with any email + ADMIN_PASSWORD.
 #
 # NOTES
-#   - Relative paths (./config.xml, ../backend/env.enc, ../backend/localhostssl/*)
-#     resolve against the /docker/ dir of the cloned repo — they all exist there.
-#   - SSL=false is correct: Coolify's Traefik terminates TLS; containers speak HTTP
-#     internally. The frontend entrypoint strips `ssl` directives from nginx.conf
-#     when SSL=false, but the cert files still need to be mounted (nginx config
-#     references the paths at parse time).
+#   - Only ./config.xml and ./users.xml are bind-mounted (ClickHouse needs them
+#     at container start). The env.enc / env.enc.dgst / localhostssl files that
+#     Highlight's hobby compose mounts are already baked into the images at
+#     build time, so we skip those mounts (cross-directory binds break under
+#     Coolify's path remapping).
+#   - SSL=false is correct: Coolify's Traefik terminates TLS; containers speak
+#     HTTP internally. The frontend entrypoint strips `ssl` directives from
+#     nginx.conf when SSL=false.
 #   - SERVICE_FQDN_* is the bare domain in Coolify (no protocol), so REACT_APP_*
-#     URIs prepend https:// explicitly.
+#     URIs prepend https:// explicitly. You must set these manually in Coolify's
+#     Environment Variables tab (auto-generation is unreliable when a compose
+#     file is switched mid-resource).
 #   - Image tags pinned to docker-v0.5.2 (matches Highlight's reference .env).
 #     Bump together when you upgrade; do not use :latest.
 #   - Postgres uses ankane/pgvector — Highlight's embeddings code requires the
@@ -148,10 +152,6 @@ services:
         condition: service_healthy
     volumes:
       - highlight-data:/highlight-data
-      - ../backend/env.enc:/build/env.enc:ro
-      - ../backend/env.enc.dgst:/build/env.enc.dgst:ro
-      - ../backend/localhostssl/server.key:/build/localhostssl/server.key:ro
-      - ../backend/localhostssl/server.crt:/build/localhostssl/server.crt:ro
     environment:
       - SERVICE_FQDN_BACKEND_8082
       - SSL=false
@@ -185,9 +185,6 @@ services:
     restart: on-failure
     depends_on:
       - backend
-    volumes:
-      - ../backend/localhostssl/server.key:/etc/ssl/private/ssl-cert.key:ro
-      - ../backend/localhostssl/server.pem:/etc/ssl/certs/ssl-cert.pem:ro
     environment:
       - SERVICE_FQDN_FRONTEND_3000
       - SSL=false
