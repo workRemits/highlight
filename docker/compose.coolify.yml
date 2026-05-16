@@ -1,9 +1,12 @@
-# Highlight.io — Coolify Docker Compose (hobby self-host)
+# Highlight.io — Coolify Docker Compose (STAGING / dev branch)
+#
+# This branch is the staging mirror of main. Same stack, different domains
+# (lab-* prefix) and ENVIRONMENT defaults to 'staging'. Spin up as a second
+# Coolify resource pointing at the `dev` branch of this fork.
 #
 # USAGE
-#   1. Commit this file to your highlight fork at: docker/compose.coolify.yml
-#   2. In Coolify: New Resource -> Public Repository -> your fork URL.
-#        - Branch: main
+#   1. In Coolify: New Resource -> Public Repository -> your fork URL.
+#        - Branch: dev
 #        - Build Pack: Docker Compose
 #        - Docker Compose Location: /docker/compose.coolify.yml
 #        - Base Directory: /
@@ -157,13 +160,13 @@ services:
       - SSL=false
       - IN_DOCKER=true
       - ON_PREM=true
-      - ENVIRONMENT=dev
+      - ENVIRONMENT=${ENVIRONMENT:-staging}
       - DISABLE_CORS=false
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - REACT_APP_AUTH_MODE=password
-      - REACT_APP_FRONTEND_URI=https://highlight.workremits.co.uk
-      - OAUTH_REDIRECT_URL=https://highlight-api.workremits.co.uk/private/oauth/callback
+      - REACT_APP_FRONTEND_URI=https://lab-highlight.workremits.co.uk
+      - OAUTH_REDIRECT_URL=https://lab-highlight-api.workremits.co.uk/private/oauth/callback
       - ENABLE_OBJECT_STORAGE=false
       - OBJECT_STORAGE_FS=/highlight-data
       - SESSION_FILE_PATH_PREFIX=/tmp/
@@ -182,10 +185,10 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.highlight-backend-http.entrypoints=http
-      - traefik.http.routers.highlight-backend-http.rule=Host(`highlight-api.workremits.co.uk`)
+      - traefik.http.routers.highlight-backend-http.rule=Host(`lab-highlight-api.workremits.co.uk`)
       - traefik.http.routers.highlight-backend-http.middlewares=redirect-to-https
       - traefik.http.routers.highlight-backend-https.entrypoints=https
-      - traefik.http.routers.highlight-backend-https.rule=Host(`highlight-api.workremits.co.uk`)
+      - traefik.http.routers.highlight-backend-https.rule=Host(`lab-highlight-api.workremits.co.uk`)
       - traefik.http.routers.highlight-backend-https.tls=true
       - traefik.http.routers.highlight-backend-https.tls.certresolver=letsencrypt
       - traefik.http.services.highlight-backend.loadbalancer.server.port=8082
@@ -200,17 +203,17 @@ services:
     environment:
       - SSL=false
       - REACT_APP_AUTH_MODE=password
-      - REACT_APP_PRIVATE_GRAPH_URI=https://highlight-api.workremits.co.uk/private
-      - REACT_APP_PUBLIC_GRAPH_URI=https://highlight-api.workremits.co.uk/public
-      - REACT_APP_FRONTEND_URI=https://highlight.workremits.co.uk
+      - REACT_APP_PRIVATE_GRAPH_URI=https://lab-highlight-api.workremits.co.uk/private
+      - REACT_APP_PUBLIC_GRAPH_URI=https://lab-highlight-api.workremits.co.uk/public
+      - REACT_APP_FRONTEND_URI=https://lab-highlight.workremits.co.uk
       - REACT_APP_DISABLE_ANALYTICS=true
     labels:
       - traefik.enable=true
       - traefik.http.routers.highlight-frontend-http.entrypoints=http
-      - traefik.http.routers.highlight-frontend-http.rule=Host(`highlight.workremits.co.uk`)
+      - traefik.http.routers.highlight-frontend-http.rule=Host(`lab-highlight.workremits.co.uk`)
       - traefik.http.routers.highlight-frontend-http.middlewares=redirect-to-https
       - traefik.http.routers.highlight-frontend-https.entrypoints=https
-      - traefik.http.routers.highlight-frontend-https.rule=Host(`highlight.workremits.co.uk`)
+      - traefik.http.routers.highlight-frontend-https.rule=Host(`lab-highlight.workremits.co.uk`)
       - traefik.http.routers.highlight-frontend-https.tls=true
       - traefik.http.routers.highlight-frontend-https.tls.certresolver=letsencrypt
       - traefik.http.services.highlight-frontend.loadbalancer.server.port=3000
@@ -269,10 +272,10 @@ services:
     labels:
       - traefik.enable=true
       - traefik.http.routers.highlight-otel-http.entrypoints=http
-      - traefik.http.routers.highlight-otel-http.rule=Host(`otel.workremits.co.uk`)
+      - traefik.http.routers.highlight-otel-http.rule=Host(`lab-otel.workremits.co.uk`)
       - traefik.http.routers.highlight-otel-http.middlewares=redirect-to-https
       - traefik.http.routers.highlight-otel-https.entrypoints=https
-      - traefik.http.routers.highlight-otel-https.rule=Host(`otel.workremits.co.uk`)
+      - traefik.http.routers.highlight-otel-https.rule=Host(`lab-otel.workremits.co.uk`)
       - traefik.http.routers.highlight-otel-https.tls=true
       - traefik.http.routers.highlight-otel-https.tls.certresolver=letsencrypt
       - traefik.http.services.highlight-otel.loadbalancer.server.port=4318
