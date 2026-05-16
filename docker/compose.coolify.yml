@@ -157,7 +157,7 @@ services:
       - SSL=false
       - IN_DOCKER=true
       - ON_PREM=true
-      - ENVIRONMENT=dev
+      - ENVIRONMENT=${ENVIRONMENT:-production}
       - DISABLE_CORS=false
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
