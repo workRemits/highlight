@@ -155,6 +155,7 @@ services:
       - highlight-data:/highlight-data
     environment:
       - SSL=false
+      - IN_DOCKER=true
       - ON_PREM=true
       - ENVIRONMENT=dev
       - DISABLE_CORS=false
