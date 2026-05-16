@@ -220,9 +220,51 @@ services:
     restart: on-failure
     depends_on:
       - backend
-    volumes:
-      - ./collector-minimal.yml:/etc/otel-collector-config.yaml:ro
-    command: ["--config=/etc/otel-collector-config.yaml"]
+    command: ["--config=env:OTEL_CONFIG"]
+    environment:
+      OTEL_CONFIG: |
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: '0.0.0.0:4318'
+                max_request_body_size: 0
+                include_metadata: true
+                cors:
+                  allowed_origins:
+                    - 'https://*'
+                    - 'http://*'
+                  allowed_headers:
+                    - 'X-Highlight-Request'
+                    - 'Origin'
+                    - 'Content-Type'
+                    - 'Accept'
+                    - 'Traceparent'
+                    - 'Tracestate'
+                  max_age: 7200
+        processors:
+          batch:
+            timeout: 1s
+            send_batch_size: 1024
+        exporters:
+          otlphttp/highlight:
+            endpoint: 'http://backend:8082/otel'
+            compression: snappy
+            timeout: 30s
+        service:
+          pipelines:
+            traces:
+              receivers: [otlp]
+              processors: [batch]
+              exporters: [otlphttp/highlight]
+            logs:
+              receivers: [otlp]
+              processors: [batch]
+              exporters: [otlphttp/highlight]
+            metrics:
+              receivers: [otlp]
+              processors: [batch]
+              exporters: [otlphttp/highlight]
     labels:
       - traefik.enable=true
       - traefik.http.routers.highlight-otel-http.entrypoints=http
