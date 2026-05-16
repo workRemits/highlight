@@ -216,15 +216,13 @@ services:
     logging: *default-logging
 
   collector:
-    build:
-      dockerfile: ./docker/collector.Dockerfile
-      context: ..
-      args:
-        - IN_DOCKER_GO=true
-        - SSL=false
+    image: otel/opentelemetry-collector-contrib:0.128.0
     restart: on-failure
     depends_on:
       - backend
+    volumes:
+      - ./collector-minimal.yml:/etc/otel-collector-config.yaml:ro
+    command: ["--config=/etc/otel-collector-config.yaml"]
     labels:
       - traefik.enable=true
       - traefik.http.routers.highlight-otel-http.entrypoints=http
