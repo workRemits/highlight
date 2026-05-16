@@ -1,8 +1,13 @@
 # Highlight.io — Coolify Docker Compose (STAGING / dev branch)
 #
 # This branch is the staging mirror of main. Same stack, different domains
-# (lab-* prefix) and ENVIRONMENT defaults to 'staging'. Spin up as a second
-# Coolify resource pointing at the `dev` branch of this fork.
+# (lab-* prefix). Spin up as a second Coolify resource pointing at the `dev`
+# branch of this fork.
+#
+# IMPORTANT: ENVIRONMENT must stay 'dev' on this branch — see comment on the
+# backend service. The fact that it's labelled "staging" here refers to OUR
+# wRemit staging plane (the lab-* subdomains it serves), not Highlight's own
+# internal ENVIRONMENT switch.
 #
 # USAGE
 #   1. In Coolify: New Resource -> Public Repository -> your fork URL.
@@ -160,7 +165,14 @@ services:
       - SSL=false
       - IN_DOCKER=true
       - ON_PREM=true
-      - ENVIRONMENT=${ENVIRONMENT:-staging}
+      # Must be 'dev' for self-hosted/single-node Redis. Highlight's code treats
+      # any other value (staging/production) as a cloud deployment and issues
+      # cluster-mode Redis commands against our standalone redis:8.0.2, which
+      # returns "ERR This instance has cluster support disabled" and crashes
+      # the public worker at startup with a nil-pointer panic. The 'staging'
+      # label for our wRemit telemetry is applied by the SDK (detectEnvironment
+      # in the frontend, NODE_ENV in the backend), independent of this var.
+      - ENVIRONMENT=dev
       - DISABLE_CORS=false
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
@@ -206,6 +218,7 @@ services:
       - REACT_APP_PRIVATE_GRAPH_URI=https://lab-highlight-api.workremits.co.uk/private
       - REACT_APP_PUBLIC_GRAPH_URI=https://lab-highlight-api.workremits.co.uk/public
       - REACT_APP_FRONTEND_URI=https://lab-highlight.workremits.co.uk
+      - REACT_APP_OTLP_ENDPOINT=https://lab-otel.workremits.co.uk
       - REACT_APP_DISABLE_ANALYTICS=true
     labels:
       - traefik.enable=true
