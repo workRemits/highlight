@@ -212,7 +212,7 @@ services:
     # bundle so OAuth redirects use our Slack app, not Highlight Cloud's.
     # Built via docker/build-frontend-native.sh from this branch; see commit
     # log for which OAuth integrations are wired up in each tag.
-    image: ghcr.io/workremits/highlight-frontend:v0.5.6-wremit-1
+    image: ghcr.io/workremits/highlight-frontend:v0.5.6-wremit-2
     restart: on-failure
     depends_on:
       - backend
