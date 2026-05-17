@@ -159,6 +159,21 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Override entrypoint to decode GITHUB_PRIVATE_KEY_BASE64 -> GITHUB_PRIVATE_KEY
+    # at container start. Coolify's env-file serializer mangles multi-line PEM
+    # values (each PEM line gets parsed as a separate KEY=VALUE), so we ship
+    # the key as a single-line base64 blob via GITHUB_PRIVATE_KEY_BASE64 and
+    # restore the real PEM here. If the base64 var is unset (e.g. on prod
+    # branch before we wire GitHub there), this is a no-op.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ -n "$$GITHUB_PRIVATE_KEY_BASE64" ]; then
+          GITHUB_PRIVATE_KEY="$$(printf '%s' "$$GITHUB_PRIVATE_KEY_BASE64" | base64 -d)"
+          export GITHUB_PRIVATE_KEY
+        fi
+        exec /build/backend -runtime=all
     volumes:
       - highlight-data:/highlight-data
     environment:
