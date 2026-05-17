@@ -1,7 +1,6 @@
 # Custom frontend build for self-hosted Highlight on wRemit infra.
 # Replaces docker/frontend.Dockerfile which hard-depends on Doppler.
 # OAuth client IDs flow in as build args -> ENV -> Vite picks them up via import.meta.env.
-syntax=docker/dockerfile:1.6
 
 FROM --platform=$BUILDPLATFORM node:lts-alpine AS frontend-build
 
