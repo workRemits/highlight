@@ -46,7 +46,7 @@ export const getGitHubInstallationOAuthUrl = (
 	}
 
 	return (
-		`https://github.com/apps/highlight-io/installations/new` +
+		`https://github.com/apps/wremit-highlight/installations/new` +
 		`?state=${btoaSafe(JSON.stringify(state))}&`
 	)
 }
