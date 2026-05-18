@@ -1,0 +1,15 @@
+# Dockerignore for docker/frontend-prebuilt.Dockerfile only.
+# Overrides the repo-root .dockerignore so we can COPY the prebuilt
+# frontend/build/ directory into the image (the root file excludes **/build
+# to prevent the in-container yarn build from picking up host artifacts).
+
+**/*.tsbuildinfo
+**/.next
+**/.turbo
+**/node_modules
+.idea
+.vercel
+.yarn/cache
+
+# Re-include frontend/build (the artifact we WANT)
+!frontend/build

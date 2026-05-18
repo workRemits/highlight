@@ -151,8 +151,29 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Override entrypoint to decode GITHUB_PRIVATE_KEY_BASE64 -> GITHUB_PRIVATE_KEY
+    # at container start. Coolify's env-file serializer mangles multi-line PEM
+    # values (each PEM line gets parsed as a separate KEY=VALUE), so we ship
+    # the key as a single-line base64 blob via GITHUB_PRIVATE_KEY_BASE64 and
+    # restore the real PEM here. If the base64 var is unset (e.g. before
+    # GitHub is wired), this is a no-op.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ -n "$$GITHUB_PRIVATE_KEY_BASE64" ]; then
+          GITHUB_PRIVATE_KEY="$$(printf '%s' "$$GITHUB_PRIVATE_KEY_BASE64" | base64 -d)"
+          export GITHUB_PRIVATE_KEY
+        fi
+        exec /build/backend -runtime=all
     volumes:
-      - highlight-data:/highlight-data
+      # Bind mount instead of a Docker named volume. Coolify recreates named
+      # volumes on each deploy in some versions, which silently wipes session
+      # replay data even though Postgres metadata persists -- dashboard lists
+      # old sessions but they play back as blank screens. The ./highlight-data
+      # path is relative to the compose file's directory on the Coolify host
+      # (under /data/coolify/services/<uuid>/), which IS persistent.
+      - ./highlight-data:/highlight-data
     environment:
       - SSL=false
       - IN_DOCKER=true
@@ -193,7 +214,11 @@ services:
     logging: *default-logging
 
   frontend:
-    image: ghcr.io/highlight/highlight-frontend:docker-v0.5.6
+    # Custom wRemit-built frontend: bakes our own OAuth client IDs into the JS
+    # bundle (Slack, GitHub App slug, etc.) so OAuth redirects use our apps,
+    # not Highlight Cloud's. Built via docker/build-frontend-native.sh; see
+    # commit log for which integrations are wired up in each tag.
+    image: ghcr.io/workremits/highlight-frontend:v0.5.6-wremit-5-amd64
     restart: on-failure
     depends_on:
       - backend
@@ -203,6 +228,7 @@ services:
       - REACT_APP_PRIVATE_GRAPH_URI=https://highlight-api.workremits.co.uk/private
       - REACT_APP_PUBLIC_GRAPH_URI=https://highlight-api.workremits.co.uk/public
       - REACT_APP_FRONTEND_URI=https://highlight.workremits.co.uk
+      - REACT_APP_OTLP_ENDPOINT=https://otel.workremits.co.uk
       - REACT_APP_DISABLE_ANALYTICS=true
     labels:
       - traefik.enable=true
@@ -286,4 +312,5 @@ volumes:
   kafka-data:
   clickhouse-data:
   clickhouse-logs:
-  highlight-data:
+  # highlight-data removed -- now a bind mount on backend service (see comment
+  # above) so Coolify persists it across redeploys.

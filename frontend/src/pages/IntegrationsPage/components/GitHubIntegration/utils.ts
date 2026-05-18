@@ -1,3 +1,4 @@
+import { GetBaseURL } from '@util/window'
 import { btoaSafe } from '@/util/string'
 import {
 	useGetGitHubIntegrationSettingsQuery,
@@ -45,8 +46,14 @@ export const getGitHubInstallationOAuthUrl = (
 		workspace_id: workspaceId,
 	}
 
+	// redirect_uri is required when the GitHub App has multiple callback URLs
+	// registered (we have prod + staging). Without it GitHub picks the first
+	// registered URL, which can send staging users to prod (or vice versa).
+	const redirectUri = `${GetBaseURL()}/callback/github`
+
 	return (
-		`https://github.com/apps/highlight-io/installations/new` +
-		`?state=${btoaSafe(JSON.stringify(state))}&`
+		`https://github.com/apps/wremit-highlight/installations/new` +
+		`?state=${btoaSafe(JSON.stringify(state))}` +
+		`&redirect_uri=${encodeURIComponent(redirectUri)}`
 	)
 }
