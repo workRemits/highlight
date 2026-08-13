@@ -413,7 +413,9 @@ export const PlayerReducer = (
 				replayer: undefined,
 				replayerState: action.nextState || ReplayerState.Empty,
 				scale: 1,
-				session: action.sessionSecureId ? s.session : undefined,
+				// Always clear session on reset to prevent stale data display
+				// Session will be set when loadSession is dispatched after query completes
+				session: undefined,
 				sessionComments: [],
 				sessionEndTime: 0,
 				sessionIntervals: [],
