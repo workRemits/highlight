@@ -701,19 +701,46 @@ export const usePlayer = (
 		[],
 	)
 
+	// Track the previous session to detect actual session changes
+	const prevSessionRef = useRef<{
+		projectId: string | undefined
+		sessionSecureId: string | undefined
+	}>({ projectId: undefined, sessionSecureId: undefined })
+	// Track which session we've initiated loading for to prevent double-loads
+	const loadingInitiatedForRef = useRef<string | undefined>(undefined)
+
 	// Initializes the session state and fetches the session data
 	useEffect(() => {
-		resetPlayer()
-		if (sessionSecureId && eventChunksData?.event_chunks?.length) {
+		const sessionChanged =
+			prevSessionRef.current.projectId !== projectId ||
+			prevSessionRef.current.sessionSecureId !== sessionSecureId
+
+		// Only reset when the session actually changed, not when eventChunksData updates
+		if (sessionChanged) {
+			resetPlayer()
+			prevSessionRef.current = { projectId, sessionSecureId }
+			loadingInitiatedForRef.current = undefined
+		}
+
+		// Load initial chunk if we have chunk data and haven't started loading for this session
+		if (
+			sessionSecureId &&
+			eventChunksData?.event_chunks?.length &&
+			loadingInitiatedForRef.current !== sessionSecureId
+		) {
+			loadingInitiatedForRef.current = sessionSecureId
 			loadEventChunk(0).then(() => {
-				dispatch({
-					type: PlayerActionType.onChunksLoad,
-					showPlayerMouseTail,
-					time: 0,
-					action: ReplayerState.Paused,
-					playerRef,
-				})
-				log('PlayerHook.tsx', 'initial chunk complete')
+				// Verify we're still on the same session before dispatching
+				if (loadingInitiatedForRef.current === sessionSecureId) {
+					dispatch({
+						type: PlayerActionType.onChunksLoad,
+						showPlayerMouseTail,
+						time: 0,
+						action: ReplayerState.Paused,
+						playerRef,
+					})
+					log('PlayerHook.tsx', 'initial chunk complete')
+				}
 			})
 		}
 	}, [
