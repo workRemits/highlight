@@ -49,6 +49,11 @@ export REACT_APP_PRIVATE_GRAPH_URI=https://pri.highlight.io
 export REACT_APP_PUBLIC_GRAPH_URI=https://pub.highlight.io
 export REACT_APP_OTLP_ENDPOINT=https://otel.highlight.io:4318
 export REACT_APP_DISABLE_ANALYTICS=false
+# Without REACT_APP_IN_DOCKER=true, the Highlight dashboard self-instruments
+# and records the operator's UI sessions into their own project (frontend/src/
+# index.tsx:152 -- H.start() runs unless isOnPrem is truthy, and isOnPrem
+# requires both Vite's PROD flag AND this env var).
+export REACT_APP_IN_DOCKER=true
 
 # yarn build:frontend = turbo run build --filter @highlight-run/frontend...
 # The trailing ... is critical: it pulls in packages/ui, sdk/highlight-run, etc.
