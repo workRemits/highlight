@@ -154,19 +154,28 @@ func (c *PasswordAuthClient) handleLogin(w http.ResponseWriter, req *http.Reques
 	err := json.NewDecoder(req.Body).Decode(&credentials)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("failed to unmarshal login details")
-		http.Error(w, loginError, http.StatusInternalServerError)
+		http.Error(w, loginError, http.StatusBadRequest)
+		return
 	}
 
 	response, err := c.performLogin(ctx, credentials)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("failed to validate login")
-		http.Error(w, loginError, http.StatusInternalServerError)
+		status := http.StatusUnauthorized
+		msg := loginError
+		if err.Error() == passwordLoginConfigurationError {
+			status = http.StatusInternalServerError
+			msg = passwordLoginConfigurationError
+		}
+		http.Error(w, msg, status)
+		return
 	}
 
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {
 		log.WithContext(ctx).Error(err)
 		http.Error(w, loginError, http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
